@@ -123,6 +123,25 @@ class PictureInPictureIOS implements PictureInPictureController {
   }
 
   @override
+  Future<void> setSourceRect(Rect? rect) async {
+    try {
+      await _method.invokeMethod<void>(
+        'setSourceRect',
+        rect == null
+            ? const <String, dynamic>{}
+            : <String, dynamic>{
+                'x': rect.left,
+                'y': rect.top,
+                'width': rect.width,
+                'height': rect.height,
+              },
+      );
+    } on MissingPluginException {
+      // no-op
+    }
+  }
+
+  @override
   Stream<PipEvent> get events => _eventStream ??=
       _events.receiveBroadcastStream().map(_mapEvent).asBroadcastStream();
 

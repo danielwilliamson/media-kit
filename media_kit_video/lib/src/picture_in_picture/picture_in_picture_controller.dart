@@ -88,6 +88,13 @@ abstract class PictureInPictureController {
     bool? isPlaying,
   });
 
+  /// The on-screen video rect (logical points) the restore animation should
+  /// return the PiP window to. Null falls back to the platform default.
+  ///
+  /// iOS only; a no-op on Android (system PiP animates to its own source rect)
+  /// and on the no-op platform.
+  Future<void> setSourceRect(Rect? rect);
+
   /// Broadcast stream of Picture-in-Picture lifecycle and playback control
   /// events.
   Stream<PipEvent> get events;

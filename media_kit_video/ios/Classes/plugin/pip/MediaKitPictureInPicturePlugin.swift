@@ -18,6 +18,10 @@
     private var controllerBox: AnyObject?
     private var eventSink: FlutterEventSink?
     private var audioSessionConfigured: Bool = false
+    // Latest on-screen video rect from Dart; kept here (not just on the controller)
+    // so it survives across sessions and seeds the controller that auto-PiP creates
+    // on backgrounding, when Dart can no longer push.
+    private var lastSourceRect: CGRect?
 
     init(
       registrar: FlutterPluginRegistrar,
@@ -113,6 +117,25 @@
           controller.setMetadata(durationMs: dur, positionMs: pos, isPlaying: playing)
         }
         result(nil)
+      case "setSourceRect":
+        // On-screen video rect (logical points) the restore animation should target.
+        // A null/empty rect clears it, falling back to the 1×1-center collapse.
+        let args = call.arguments as? [String: Any]
+        let x = (args?["x"] as? NSNumber)?.doubleValue
+        let y = (args?["y"] as? NSNumber)?.doubleValue
+        let width = (args?["width"] as? NSNumber)?.doubleValue
+        let height = (args?["height"] as? NSNumber)?.doubleValue
+        if let x = x, let y = y, let width = width, let height = height, width > 0, height > 0 {
+          lastSourceRect = CGRect(x: x, y: y, width: width, height: height)
+        } else {
+          lastSourceRect = nil
+        }
+        if #available(iOS 15.0, *),
+          let controller = controllerBox as? MediaKitPictureInPictureController
+        {
+          controller.setRestoreSourceRect(lastSourceRect)
+        }
+        result(nil)
       default:
         result(FlutterMethodNotImplemented)
       }
@@ -165,6 +188,7 @@
         self?.eventSink?(event)
       }
       self.controllerBox = pipController
+      pipController.setRestoreSourceRect(lastSourceRect)
 
       let started = pipController.start(
         handle: handle,
