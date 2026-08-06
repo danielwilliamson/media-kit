@@ -44,5 +44,8 @@ class PictureInPictureNoop implements PictureInPictureController {
   }) async {}
 
   @override
+  Future<void> setSourceRect(Rect? rect) async {}
+
+  @override
   Stream<PipEvent> get events => const Stream.empty();
 }

@@ -46,6 +46,11 @@
     // access in background). Instead, set this flag and rebuild on the next
     // appDidBecomeActive when the rendering pipeline is alive.
     private var pendingRebuild: Bool = false
+    // Where the restore animation should return the PiP window to — the video's
+    // on-screen rect, pushed from Dart. Applied only at `willStop` so the active
+    // session's layer stays 1×1 (no AVKit overlay-sublayer decoration); nil keeps
+    // the 1×1-center collapse.
+    private var restoreSourceRect: CGRect?
 
     init(
       hostView: UIView,
@@ -197,6 +202,10 @@
       pipController?.requiresLinearPlayback = required
     }
 
+    func setRestoreSourceRect(_ rect: CGRect?) {
+      restoreSourceRect = rect
+    }
+
     private func teardown() {
       if let handle = handle {
         outputManager.setOnFrameRendered(handle: handle, key: "pip", nil)
@@ -294,6 +303,15 @@
       _ controller: AVPictureInPictureController
     ) {
       didRestoreInterface = false
+      // Aim the restore animation at the on-screen video rect (fullscreen frame /
+      // collapsed floating slot) instead of the 1×1 center point, so it doesn't read
+      // as a shrink-to-black. Set frame-only (no implicit animation).
+      if let rect = restoreSourceRect {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        displayLayer.frame = rect
+        CATransaction.commit()
+      }
       eventCallback(["event": "willStop"])
     }
 

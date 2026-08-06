@@ -112,6 +112,11 @@ class PictureInPictureAndroid implements PictureInPictureController {
   }
 
   @override
+  Future<void> setSourceRect(Rect? rect) async {
+    // No-op on Android — system PiP animates to its own source-rect hint.
+  }
+
+  @override
   Stream<PipEvent> get events => _eventStream ??=
       _events.receiveBroadcastStream().map(_mapEvent).asBroadcastStream();
 
